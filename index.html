@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4fbfa">
+  <meta name="description" content="在洛的小天地，聊聊天，追追风，把日子过成一首歌。">
+  <title>洛的小天地 · LUOTY</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#home" aria-label="洛的小天地首页"><span class="brand-mark">l<span>✳</span></span><span>洛的小天地<small>LUOTY'S LITTLE WORLD</small></span></a>
+    <nav aria-label="主导航"><a class="nav-link active" href="#home">首页</a><a class="nav-link" href="#explore">发现小美好</a><a class="nav-game" href="#run"><span class="tiny-star">✧</span> 一起跑跑 <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <div class="hero-art" role="img" aria-label="青蓝天空下，云朵与远山相拥的梦幻风景"></div>
+      <div class="hero-grain"></div>
+      <div class="hero-copy"><div class="eyebrow"><span></span> A LITTLE WORLD, A LOT OF JOY</div><h1 id="hero-title">把日子，<br>过成一首<span class="song">歌<svg viewBox="0 0 180 18" aria-hidden="true"><path d="M4 12Q80-5 173 9M22 16Q95 4 160 13"/></svg></span>。</h1><p>风里有歌，云里有梦。<br>还有一个，等你来玩的小天地。</p><a class="hero-link" href="#explore">今天，也要开心呀 <span aria-hidden="true">↗</span></a></div>
+      <span class="hero-note">遇见天依 · 遇见好心情</span>
+      <div class="hero-stamp" aria-hidden="true"><span>✧</span>让快乐<br>自由生长</div>
+      <a class="scroll-cue" href="#explore" aria-label="向下探索"><svg viewBox="0 0 30 18" aria-hidden="true"><path d="m4 4 11 10L26 4"/></svg></a>
+      <span class="hero-index">01 / LITTLE BEGINNINGS</span>
+    </section>
+    <section class="explore" id="explore" aria-labelledby="explore-title">
+      <div class="section-top"><div><div class="eyebrow"><span></span> MAKE YOURSELF AT HOME</div><h2 id="explore-title">今天，想玩点什么<span>？</span></h2><p>小小的快乐，在这里慢慢收集。</p></div><span class="section-doodle" aria-hidden="true">✳<small>HAVE A NICE DAY</small></span></div>
+      <div class="module-grid">
+        <a class="module-card chat-card" href="#chat"><div class="card-art chat-art"><span class="art-label">GOOD WORDS, GOOD MOOD</span><div class="chat-bubble bubble-one">今天也要元气满满 <span>✦</span></div><div class="chat-bubble bubble-two"><span class="little-flower">✿</span> 来聊点开心的吧～</div><div class="floating-heart">♡</div><span class="art-spark spark-one">✧</span><span class="art-spark spark-two">✳</span><span class="card-pill"><i></i> 留一点温柔在这里</span></div><div class="card-body"><div class="card-number">01 <span>/ LITTLE CONVERSATIONS</span></div><div class="card-heading"><h3>云边聊天室</h3><span class="circle-arrow" aria-hidden="true">↗</span></div><p>碎碎念、小心情，都有地方安放。</p><span class="card-action">坐下来聊聊 <span aria-hidden="true">→</span></span></div></a>
+        <a class="module-card run-card" href="#run"><div class="card-art run-art"><span class="art-label">A LITTLE RUN, A LITTLE FUN</span><canvas id="card-scene" width="660" height="300" aria-label="像素洛天依在云朵与草地间奔跑"></canvas><span class="card-pill">♥ ♥ ♥ <span>快乐满格</span></span><span class="pixel-hi" aria-hidden="true">LET'S GO!</span></div><div class="card-body"><div class="card-number">02 <span>/ CATCH THE LITTLE JOYS</span></div><div class="card-heading"><h3>小洛快跑</h3><span class="circle-arrow" aria-hidden="true">↗</span></div><p>和小洛一起追风，顺便捡一笼快乐。</p><span class="card-action">出发，去追风 <span aria-hidden="true">→</span></span></div></a>
+      </div>
+      <div class="more-note"><span>✧</span><p>还有好多小美好，正在路上呢。</p><span>✧</span></div>
+      <footer><a class="footer-logo" href="#home">luoty<span>✳</span></a><span>愿每一个路过的你，都能带走一点快乐。</span><a href="https://github.com/Kotokowa/luotianyiPost" target="_blank" rel="noopener noreferrer">去 GitHub 串门 ↗</a></footer>
+    </section>
+  </main>
+  <dialog id="chat-dialog" class="app-dialog chat-dialog" aria-labelledby="chat-title">
+    <div class="dialog-heading"><div><span class="eyebrow">LITTLE CONVERSATIONS</span><h2 id="chat-title">云边聊天室 <span>✿</span></h2></div><button class="icon-button close-dialog" aria-label="关闭聊天室">×</button></div>
+    <div class="chat-status"><span><i></i> 本机小窝</span><span>把心情轻轻放下来</span></div>
+    <div class="messages" id="messages" role="log" aria-label="聊天消息" aria-live="polite"></div>
+    <form id="chat-form"><label class="nickname-label" for="nickname">你的小名<input id="nickname" maxlength="16" placeholder="路过的小云朵" autocomplete="nickname"></label><div class="composer"><label class="sr-only" for="message-input">想说的话</label><input id="message-input" maxlength="500" placeholder="今天有什么小开心？" autocomplete="off" required><button class="send-button" type="submit" aria-label="发送消息">发送 <span aria-hidden="true">↗</span></button></div><div class="chat-footnote">悄悄话留在这台设备里，同一浏览器的小窗也能听见。</div></form>
+  </dialog>
+  <dialog id="game-dialog" class="app-dialog game-dialog" aria-labelledby="game-title">
+    <div class="dialog-heading"><div><span class="eyebrow">CATCH THE LITTLE JOYS</span><h2 id="game-title">小洛快跑 <span>✦</span></h2></div><div class="dialog-actions"><button class="icon-button" id="pause-game" aria-label="暂停游戏" disabled>Ⅱ</button><button class="icon-button close-dialog" aria-label="关闭游戏">×</button></div></div>
+    <div class="game-hud"><div id="hearts" class="hearts" aria-label="生命 3 / 3"></div><div class="scores"><span>最高 <b id="best-score">00000</b></span><span>本次 <b id="score">00000</b></span></div></div>
+    <div class="game-stage"><canvas id="game-canvas" width="960" height="390" tabindex="0" aria-label="小洛快跑。按空格或向上键跳跃，手机点击画面跳跃。"></canvas><div class="game-overlay" id="game-overlay"><span class="overlay-icon" id="overlay-icon">✦</span><h3 id="overlay-title">风刚好，一起跑跑？</h3><p id="overlay-text">躲开小刀叉，接住热乎乎的小笼包。</p><p class="result-score" id="result-score" hidden></p><button class="primary-button" id="start-game">出发啦 <span>→</span></button><p id="storage-note" class="storage-note" hidden></p><button class="text-button" id="save-record" hidden>把成绩装进口袋 ↓</button></div><div class="game-toast" id="game-toast" aria-live="polite"></div></div>
+    <div class="game-instructions"><span><kbd>空格</kbd> / <kbd>↑</kbd> / 点一下，跳起来</span><span><span class="instruction-heart">♥</span> 小笼包 +1 颗心 · 最多 3 颗</span><span><kbd>P</kbd> 暂停</span></div>
+  </dialog>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
