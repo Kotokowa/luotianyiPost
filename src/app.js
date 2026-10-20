@@ -1,5 +1,5 @@
 import { Runner } from './engine.js';
-import { drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
+import { characterReady, drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
 
 const $ = selector => document.querySelector(selector);
 const storage = {
@@ -29,6 +29,25 @@ let accumulator = 0;
 let lastFrame = 0;
 let animationId = 0;
 let lastScore = -1;
+const duckInputs = new Set();
+let lastPace = '';
+
+function releaseControls() {
+  duckInputs.clear();
+  runner.duck(false);
+  $('#slide-game').setAttribute('aria-pressed', 'false');
+}
+
+function updateDuck() {
+  runner.duck(duckInputs.size > 0);
+  $('#slide-game').setAttribute('aria-pressed', String(runner.duckHeld));
+}
+
+function refreshPace() {
+  const label = `${runner.night >= .5 ? '☾ 星星陪跑' : '☀ 晴空追风'} · ${runner.pace.toFixed(1)}×`;
+  if (label !== lastPace) { $('#run-weather').textContent = label; lastPace = label; }
+  $('.game-stage').classList.toggle('night', runner.night >= .5);
+}
 
 function number(value) { return String(value).padStart(5, '0'); }
 function refreshHUD() {
@@ -49,9 +68,12 @@ function saveBest() {
 }
 
 function handleGameEvent(event) {
+  if (event === 'faster') showToast('风变快啦，跟紧小洛～');
+  if (event === 'night' || event === 'day') showToast(event === 'night' ? '星星亮啦，陪你再跑一程 ✧' : '天亮啦，迎着晨光继续跑～');
   if (event === 'heal' || event === 'full') showToast(event === 'heal' ? '热乎乎的，爱心 +1 ♥' : '快乐满格，肚肚也满格 ♡');
   if (event === 'hurt') showToast('哎呀～拍拍灰，继续跑！');
   if (event === 'over') {
+    releaseControls();
     clearTimeout(toastTimer);
     $('#game-toast').classList.remove('visible');
     const record = runner.score > best;
@@ -75,7 +97,7 @@ function showOverlay(mode, record = false) {
   const paused = mode === 'paused';
   $('#overlay-icon').textContent = over ? '✧' : paused ? '☁' : '✦';
   $('#overlay-title').textContent = over ? (record ? '新纪录！小洛超棒的～' : '跑累啦，歇一小会儿～') : paused ? '风也在等你呢' : '风刚好，一起跑跑？';
-  $('#overlay-text').textContent = over ? '每一步，都是一份小小的勇气。' : paused ? '准备好了，就继续追风吧。' : '躲开小刀叉，接住热乎乎的小笼包。';
+  $('#overlay-text').textContent = over ? '每一步，都是一份小小的勇气。' : paused ? '准备好了，就继续追风吧。' : '刀叉跳过去，低飞云团蹲着躲，小笼包记得接住～';
   $('#start-game').replaceChildren(document.createTextNode(over ? '再跑一次 ' : paused ? '继续追风 ' : '出发啦 '));
   const arrow = document.createElement('span');arrow.textContent = '→';$('#start-game').append(arrow);
   $('#result-score').hidden = !over;
@@ -87,6 +109,7 @@ function showOverlay(mode, record = false) {
 }
 
 function startGame() {
+  releaseControls();
   if (runner.state === 'paused') runner.state = 'running';
   else { runner.reset(); lastScore = -1; }
   $('#game-overlay').hidden = true;
@@ -101,6 +124,7 @@ function startGame() {
 
 function pauseGame() {
   if (runner.state === 'running') {
+    releaseControls();
     runner.state = 'paused';
     saveBest();showOverlay('paused');
     $('#pause-game').textContent = '▷';
@@ -116,6 +140,7 @@ function sizeGame() {
   ctx.imageSmoothingEnabled = false;
   runner.resize(canvas.width, canvas.height);
   renderRunner(ctx, runner);
+  refreshPace();
 }
 
 function frame(timestamp) {
@@ -129,6 +154,7 @@ function frame(timestamp) {
     if (lastScore !== runner.score) { $('#score').textContent = number(runner.score); lastScore = runner.score; }
   }
   renderRunner(ctx, runner);
+  refreshPace();
   if (runner.state === 'running') animationId = requestAnimationFrame(frame);
 }
 
@@ -144,10 +170,36 @@ document.addEventListener('keydown', event => {
   if (!gameDialog.open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
   if (event.code === 'Space' || event.code === 'ArrowUp') {
     if (runner.state === 'running') { event.preventDefault(); if (!event.repeat) runner.jump(); }
+  } else if (['ControlLeft', 'ControlRight', 'ArrowDown'].includes(event.code)) {
+    event.preventDefault();duckInputs.add(event.code);updateDuck();
   } else if (event.code === 'KeyP' && !event.repeat) { event.preventDefault();pauseGame(); }
 });
+document.addEventListener('keyup', event => {
+  if (duckInputs.delete(event.code)) { event.preventDefault();updateDuck(); }
+});
+const slideButton = $('#slide-game');
+slideButton.addEventListener('pointerdown', event => {
+  if (event.button > 0 || runner.state !== 'running') return;
+  event.preventDefault();slideButton.setPointerCapture(event.pointerId);
+  duckInputs.add(`pointer-${event.pointerId}`);updateDuck();
+});
+for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) slideButton.addEventListener(name, event => {
+  duckInputs.delete(`pointer-${event.pointerId}`);updateDuck();
+});
+slideButton.addEventListener('keydown', event => {
+  if (['Space', 'Enter'].includes(event.code)) { event.preventDefault();event.stopPropagation();duckInputs.add('slide-button');updateDuck(); }
+});
+slideButton.addEventListener('keyup', event => {
+  if (['Space', 'Enter'].includes(event.code)) { event.preventDefault();event.stopPropagation();duckInputs.delete('slide-button');updateDuck(); }
+});
+slideButton.addEventListener('blur', () => { duckInputs.delete('slide-button');updateDuck(); });
+$('#jump-game').addEventListener('pointerdown', event => {
+  if (event.button > 0) return;
+  event.preventDefault();runner.jump();
+});
+$('#jump-game').addEventListener('click', event => { if (event.detail === 0) runner.jump(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && runner.state === 'running' && gameDialog.open) pauseGame(); });
-window.addEventListener('blur', () => { if (runner.state === 'running' && gameDialog.open) pauseGame(); });
+window.addEventListener('blur', () => { releaseControls();if (runner.state === 'running' && gameDialog.open) pauseGame(); });
 window.addEventListener('pagehide', saveBest);
 new ResizeObserver(sizeGame).observe(canvas);
 
@@ -232,6 +284,7 @@ function openDialog(dialog) {
   document.body.classList.add('dialog-open');
   dialog.showModal();
   if (dialog === gameDialog) {
+    releaseControls();
     sizeGame();refreshHUD();
     if (runner.state === 'running') runner.state = 'paused';
     showOverlay(runner.state === 'over' ? 'over' : runner.state === 'paused' ? 'paused' : 'idle');
@@ -242,6 +295,7 @@ function openDialog(dialog) {
 function closeDialog(updateHash = true) {
   if (!openedDialog) return;
   if (openedDialog === gameDialog) {
+    releaseControls();
     if (runner.state === 'running') runner.state = 'paused';
     saveBest();cancelAnimationFrame(animationId);animationId = 0;lastFrame = 0;
   }
@@ -285,8 +339,16 @@ updateNavigation();
 
 const card = $('#card-scene');const cardCtx = card.getContext('2d');
 cardCtx.imageSmoothingEnabled = false;
-drawLandscape(cardCtx,660,300,95);
-drawTianyi(cardCtx,245,139,{scale:3,frame:0,time:0});
-drawBun(cardCtx,425,168,1.35);
-drawObstacle(cardCtx,{x:540,y:190,type:'fork'});
+function drawCard() {
+  drawLandscape(cardCtx,660,300,95);
+  drawTianyi(cardCtx,240,112,{scale:1.4,frame:0});
+  drawBun(cardCtx,425,168,1.35);
+  drawObstacle(cardCtx,{x:540,y:190,type:'fork'});
+  drawObstacle(cardCtx,{x:385,y:94,type:'cloud'});
+}
+drawCard();
+characterReady.then(() => {
+  $('#start-game').disabled = false;
+  drawCard();renderRunner(ctx, runner);
+}).catch(error => { $('#overlay-text').textContent = error.message; });
 refreshHUD();renderMessages();route();
