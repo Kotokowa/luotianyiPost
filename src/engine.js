@@ -1,4 +1,4 @@
-export const RULES = Object.freeze({ gravity: 1540, jump: -600, maxLives: 3, invincibility: 1.45, baseSpeed: 230, maxSpeed: 450, playerHeight: 88, slideHeight: 34, obstacleGap: 1.45 });
+export const RULES = Object.freeze({ gravity: 1540, jump: -600, maxLives: 3, invincibility: 1.45, baseSpeed: 230, maxSpeed: 805, playerHeight: 88, slideHeight: 34, obstacleGap: 1.45 });
 
 export function overlaps(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -15,9 +15,10 @@ export class Runner {
   }
   get ground() { return this.height - 65; }
   get score() { return Math.floor(this.distance / 12); }
-  get speed() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .16) * this.viewportPace; }
+  get speed() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .42) * this.viewportPace; }
   get viewportPace() { return Math.min(1, Math.max(.66, this.width / 720)); }
-  get pace() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .16) / RULES.baseSpeed; }
+  get pace() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .42) / RULES.baseSpeed; }
+  get density() { return 1 + Math.min(1, Math.max(0, (this.score - 300) / 1400)) * .5; }
   get ducking() { return this.duckHeld && this.player.grounded; }
   get night() {
     const cycle = this.score % 800;
@@ -110,9 +111,9 @@ export class Runner {
       const h = flying ? 34 : type === 'fork' ? 45 : 41;
       const baseY = flying ? this.ground - (this.score >= 160 && this.random() < .25 ? 126 : 77) : this.ground - h;
       this.obstacles.push({ x: this.width + 40, y: baseY, baseY, w: flying ? 64 : 32, h, type, hit: false, phase: this.random() * Math.PI * 2 });
-      this.obstacleTimer = RULES.obstacleGap + this.random() * .7;
+      this.obstacleTimer = (RULES.obstacleGap + this.random() * .7) / this.density;
     }
-    if (this.bunTimer <= 0 && this.obstacleTimer > .75) {
+    if (this.bunTimer <= 0) {
       const elevation = this.random() < .5 ? 48 : 132;
       this.buns.push({ x: this.width + 40, y: this.ground - elevation, w: 28, h: 24, phase: this.random() * Math.PI * 2 });
       this.bunTimer = 4.4 + this.random() * 2.6;

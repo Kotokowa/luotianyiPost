@@ -53,13 +53,13 @@ test('pause freezes game and speed is capped during a long run', () => {
   const before = game.distance;advance(game, 2);assert.equal(game.distance, before);
   game.distance = 100000;assert.equal(game.speed, RULES.maxSpeed);
 });
-test('random spawn schedules always leave at least 1.45 seconds between obstacles', () => {
+test('random spawn schedules keep the late-run interval above the density cap', () => {
   for (const random of [() => 0, () => .5, () => .999]) {
     const game = new Runner({ random });game.reset();game.player.x = -1000;
     let lastSpawn = 0;let spawns = 0;
     for(let i = 0; i < 120 * 45; i++) {
       const before = game.obstacleTimer;game.step(1 / 120);
-      if (game.obstacleTimer > before) { if (lastSpawn) assert.ok(game.time - lastSpawn >= 1.44);lastSpawn = game.time;spawns++; }
+      if (game.obstacleTimer > before) { if (lastSpawn) assert.ok(game.time - lastSpawn >= RULES.obstacleGap / 1.5 - .01);lastSpawn = game.time;spawns++; }
     }
     assert.ok(spawns > 15);
   }
@@ -117,8 +117,29 @@ test('speed rises with score, mobile pace leaves reaction time, and reset restor
   game.distance = 400 * 12;assert.ok(game.speed > initial);assert.equal(game.night, 1);
   game.distance = 620 * 12;assert.equal(game.night, 0);
   game.resize(320, 330);game.distance = 100000;
-  assert.ok((game.width - game.player.x - 64) / game.speed > .65);
+  assert.ok((game.width - game.player.x - 64) / game.speed > .38);
+  assert.equal(game.pace,3.5);assert.equal(game.density,1.5);
   game.duck(true);game.reset();assert.equal(game.night, 0);assert.equal(game.duckHeld, false);
+});
+
+test('late-run density grows to 1.5 while bun cadence stays unchanged', () => {
+  const counts=[];
+  for (const score of [0,2000]) {
+    const game = new Runner({ random:()=>.5 });game.reset();game.player.x=-10000;
+    let obstacles=0,buns=0;
+    for (let i=0;i<120*60;i++) {
+      game.distance=score*12;
+      const beforeObstacle=game.obstacleTimer,beforeBun=game.bunTimer;
+      game.step(1/120);
+      if (game.obstacleTimer>beforeObstacle) obstacles++;
+      if (game.bunTimer>beforeBun) buns++;
+    }
+    counts.push({obstacles,buns});
+  }
+  assert.equal(counts[0].buns,counts[1].buns);
+  assert.ok(counts[1].obstacles/counts[0].obstacles>1.4 && counts[1].obstacles/counts[0].obstacles<1.6);
+  const {game}=setup();game.distance=1000*12;
+  assert.equal(game.density,1.25);game.distance=0;assert.equal(game.density,1);
 });
 
 test('night transitions are gradual, repeat, and emit one event per boundary', () => {

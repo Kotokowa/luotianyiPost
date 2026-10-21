@@ -1,5 +1,6 @@
 import { Runner } from './engine.js';
 import { characterReady, drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
+import { initPaintRoom } from './paint.js';
 
 const $ = selector => document.querySelector(selector);
 const storage = {
@@ -21,6 +22,8 @@ let lastFocus = null;
 let toastTimer;
 const gameDialog = $('#game-dialog');
 const chatDialog = $('#chat-dialog');
+const paintDialog = $('#paint-dialog');
+const paintRoom = initPaintRoom(paintDialog);
 const canvas = $('#game-canvas');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
@@ -30,7 +33,6 @@ let lastFrame = 0;
 let animationId = 0;
 let lastScore = -1;
 const duckInputs = new Set();
-let lastPace = '';
 
 function releaseControls() {
   duckInputs.clear();
@@ -43,9 +45,7 @@ function updateDuck() {
   $('#slide-game').setAttribute('aria-pressed', String(runner.duckHeld));
 }
 
-function refreshPace() {
-  const label = `${runner.night >= .5 ? '☾ 星星陪跑' : '☀ 晴空追风'} · ${runner.pace.toFixed(1)}×`;
-  if (label !== lastPace) { $('#run-weather').textContent = label; lastPace = label; }
+function refreshGameTheme() {
   $('.game-stage').classList.toggle('night', runner.night >= .5);
 }
 
@@ -68,8 +68,6 @@ function saveBest() {
 }
 
 function handleGameEvent(event) {
-  if (event === 'faster') showToast('风变快啦，跟紧小洛～');
-  if (event === 'night' || event === 'day') showToast(event === 'night' ? '星星亮啦，陪你再跑一程 ✧' : '天亮啦，迎着晨光继续跑～');
   if (event === 'heal' || event === 'full') showToast(event === 'heal' ? '热乎乎的，爱心 +1 ♥' : '快乐满格，肚肚也满格 ♡');
   if (event === 'hurt') showToast('哎呀～拍拍灰，继续跑！');
   if (event === 'over') {
@@ -140,7 +138,7 @@ function sizeGame() {
   ctx.imageSmoothingEnabled = false;
   runner.resize(canvas.width, canvas.height);
   renderRunner(ctx, runner);
-  refreshPace();
+  refreshGameTheme();
 }
 
 function frame(timestamp) {
@@ -154,7 +152,7 @@ function frame(timestamp) {
     if (lastScore !== runner.score) { $('#score').textContent = number(runner.score); lastScore = runner.score; }
   }
   renderRunner(ctx, runner);
-  refreshPace();
+  refreshGameTheme();
   if (runner.state === 'running') animationId = requestAnimationFrame(frame);
 }
 
@@ -289,7 +287,8 @@ function openDialog(dialog) {
     if (runner.state === 'running') runner.state = 'paused';
     showOverlay(runner.state === 'over' ? 'over' : runner.state === 'paused' ? 'paused' : 'idle');
     renderRunner(ctx, runner);
-  } else { renderMessages();$('#messages').scrollTop = $('#messages').scrollHeight; }
+  } else if (dialog === paintDialog) paintRoom.open();
+  else { renderMessages();$('#messages').scrollTop = $('#messages').scrollHeight; }
 }
 
 function closeDialog(updateHash = true) {
@@ -300,6 +299,7 @@ function closeDialog(updateHash = true) {
     saveBest();cancelAnimationFrame(animationId);animationId = 0;lastFrame = 0;
   }
   const dialog = openedDialog;openedDialog = null;dialog.close();
+  if (dialog === paintDialog) paintRoom.close();
   document.body.classList.remove('dialog-open');
   if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}#explore`);
   if (lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
@@ -308,11 +308,12 @@ function closeDialog(updateHash = true) {
 function route() {
   if (location.hash === '#chat') openDialog(chatDialog);
   else if (location.hash === '#run') openDialog(gameDialog);
+  else if (location.hash === '#paint') openDialog(paintDialog);
   else closeDialog(false);
 }
 
 for (const button of document.querySelectorAll('.close-dialog')) button.addEventListener('click', () => closeDialog());
-for (const dialog of [chatDialog, gameDialog]) {
+for (const dialog of [chatDialog, gameDialog, paintDialog]) {
   dialog.addEventListener('cancel', event => { event.preventDefault();closeDialog(); });
   dialog.addEventListener('click', event => {
     if (event.target !== dialog) return;
@@ -320,7 +321,7 @@ for (const dialog of [chatDialog, gameDialog]) {
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeDialog();
   });
 }
-for (const link of document.querySelectorAll('a[href="#run"],a[href="#chat"]')) link.addEventListener('click', event => {
+for (const link of document.querySelectorAll('a[href="#run"],a[href="#chat"],a[href="#paint"]')) link.addEventListener('click', event => {
   event.preventDefault();const hash = link.getAttribute('href');
   if (location.hash !== hash) history.pushState(null, '', hash);
   route();
