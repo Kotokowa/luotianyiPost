@@ -61,7 +61,7 @@ export class PixelArt {
     this.past.push(this.snapshot());this.restore(this.future.pop());return true;
   }
   replace(width, height, pixels = null) {
-    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > MAX_SIZE || height > MAX_SIZE || (pixels && pixels.length !== width * height)) throw new Error('画布边长可以是 1～256 格哦～');
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > MAX_SIZE || height > MAX_SIZE || (pixels && pixels.length !== width * height)) throw new Error('画布宽高必须是 1～256 的整数。');
     pixels ||= new Uint32Array(width * height);
     this.begin();this.restore({ width, height, pixels });return this.commit();
   }
@@ -106,7 +106,7 @@ export class PixelArt {
 }
 
 export function readProject(value) {
-  if (!value || value.format !== 'luoty-pixel' || value.version !== 1 || !Number.isInteger(value.width) || !Number.isInteger(value.height) || value.width < 1 || value.height < 1 || value.width > MAX_SIZE || value.height > MAX_SIZE || !Array.isArray(value.pixels) || value.pixels.length !== value.width * value.height || !value.pixels.every(pixel => Number.isInteger(pixel) && pixel >= 0 && pixel <= 0xffffffff)) throw new Error('这份画稿好像没装完整，换一份试试吧～');
+  if (!value || value.format !== 'luoty-pixel' || value.version !== 1 || !Number.isInteger(value.width) || !Number.isInteger(value.height) || value.width < 1 || value.height < 1 || value.width > MAX_SIZE || value.height > MAX_SIZE || !Array.isArray(value.pixels) || value.pixels.length !== value.width * value.height || !value.pixels.every(pixel => Number.isInteger(pixel) && pixel >= 0 && pixel <= 0xffffffff)) throw new Error('画稿数据无效或不完整，请选择有效的 JSON 画稿。');
   return { width: value.width, height: value.height, pixels: Uint32Array.from(value.pixels) };
 }
 

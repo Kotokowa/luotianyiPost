@@ -279,6 +279,7 @@ function openDialog(dialog) {
   lastFocus = document.activeElement;
   openedDialog = dialog;
   document.documentElement.style.setProperty('--scrollbar', `${window.innerWidth - document.documentElement.clientWidth}px`);
+  document.documentElement.classList.add('dialog-open');
   document.body.classList.add('dialog-open');
   dialog.showModal();
   if (dialog === gameDialog) {
@@ -301,6 +302,7 @@ function closeDialog(updateHash = true) {
   const dialog = openedDialog;openedDialog = null;dialog.close();
   if (dialog === paintDialog) paintRoom.close();
   document.body.classList.remove('dialog-open');
+  document.documentElement.classList.remove('dialog-open');
   if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}#explore`);
   if (lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
 }
