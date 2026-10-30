@@ -23,6 +23,9 @@ let toastTimer;
 const gameDialog = $('#game-dialog');
 const chatDialog = $('#chat-dialog');
 const paintDialog = $('#paint-dialog');
+const lyricsDialog = $('#lyrics-dialog');
+const campaignDialog = $('#campaign-dialog');
+const dialogsByHash = new Map([['#chat', chatDialog], ['#run', gameDialog], ['#paint', paintDialog], ['#lyrics', lyricsDialog], ['#campaign', campaignDialog]]);
 const paintRoom = initPaintRoom(paintDialog);
 const canvas = $('#game-canvas');
 const ctx = canvas.getContext('2d');
@@ -289,7 +292,7 @@ function openDialog(dialog) {
     showOverlay(runner.state === 'over' ? 'over' : runner.state === 'paused' ? 'paused' : 'idle');
     renderRunner(ctx, runner);
   } else if (dialog === paintDialog) paintRoom.open();
-  else { renderMessages();$('#messages').scrollTop = $('#messages').scrollHeight; }
+  else if (dialog === chatDialog) { renderMessages();$('#messages').scrollTop = $('#messages').scrollHeight; }
 }
 
 function closeDialog(updateHash = true) {
@@ -308,14 +311,13 @@ function closeDialog(updateHash = true) {
 }
 
 function route() {
-  if (location.hash === '#chat') openDialog(chatDialog);
-  else if (location.hash === '#run') openDialog(gameDialog);
-  else if (location.hash === '#paint') openDialog(paintDialog);
+  const dialog = dialogsByHash.get(location.hash);
+  if (dialog) openDialog(dialog);
   else closeDialog(false);
 }
 
 for (const button of document.querySelectorAll('.close-dialog')) button.addEventListener('click', () => closeDialog());
-for (const dialog of [chatDialog, gameDialog, paintDialog]) {
+for (const dialog of dialogsByHash.values()) {
   dialog.addEventListener('cancel', event => { event.preventDefault();closeDialog(); });
   dialog.addEventListener('click', event => {
     if (event.target !== dialog) return;
@@ -323,11 +325,14 @@ for (const dialog of [chatDialog, gameDialog, paintDialog]) {
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeDialog();
   });
 }
-for (const link of document.querySelectorAll('a[href="#run"],a[href="#chat"],a[href="#paint"]')) link.addEventListener('click', event => {
-  event.preventDefault();const hash = link.getAttribute('href');
-  if (location.hash !== hash) history.pushState(null, '', hash);
-  route();
-});
+for (const link of document.querySelectorAll('a[href^="#"]')) {
+  if (!dialogsByHash.has(link.getAttribute('href'))) continue;
+  link.addEventListener('click', event => {
+    event.preventDefault();const hash = link.getAttribute('href');
+    if (location.hash !== hash) history.pushState(null, '', hash);
+    route();
+  });
+}
 window.addEventListener('hashchange', route);
 window.addEventListener('popstate', route);
 function updateNavigation() {
