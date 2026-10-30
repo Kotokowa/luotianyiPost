@@ -10,8 +10,6 @@
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./hero.css">
-  <link rel="preload" href="./assets/hero-tianyi.webp" as="image" type="image/webp" fetchpriority="high">
-  <link rel="preload" href="./assets/hero-keyboard.webp" as="image" type="image/webp">
   <link rel="preload" href="./assets/tianyi-run.webp" as="image" type="image/webp">
 </head>
 <body>
@@ -22,13 +20,15 @@
   <main>
     <section class="hero" id="home" aria-labelledby="hero-title">
       <h1 id="hero-title" class="sr-only">欢迎来到小洛包次元</h1>
-      <div class="hero-art">
+      <div class="hero-art" aria-busy="true" aria-hidden="true">
         <div class="hero-scene" id="hero-scene">
-          <img class="hero-layer hero-tianyi" src="./assets/hero-tianyi.webp" width="2560" height="1664" alt="洛天依伸出手，琴键在身前轻盈环绕" decoding="async" fetchpriority="high">
-          <img class="hero-layer hero-keyboard" src="./assets/hero-keyboard.webp" width="2560" height="1664" alt="" decoding="async">
+          <img class="hero-layer hero-tianyi" data-src="./assets/hero-tianyi.webp" data-bytes="954128" width="2560" height="1664" alt="洛天依伸出手，琴键在身前轻盈环绕" decoding="async">
+          <img class="hero-layer hero-keyboard" data-src="./assets/hero-keyboard.webp" data-bytes="310600" width="2560" height="1664" alt="" decoding="async">
         </div>
       </div>
       <p class="hero-development">网站正在开发中，预计 2026 年底完成。</p>
+      <div class="hero-loader" id="hero-loader" role="progressbar" aria-label="头图加载" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><img src="./assets/tiandian-original.webp" width="750" height="600" alt="" decoding="async"></div>
+      <button class="hero-retry" id="hero-retry" type="button" hidden>重新加载头图 ↻</button>
       <a class="scroll-cue" href="#explore" aria-label="向下探索"><svg viewBox="0 0 30 18" aria-hidden="true"><path d="m4 4 11 10L26 4"/></svg></a>
     </section>
     <section class="explore" id="explore" aria-labelledby="explore-title">
@@ -73,6 +73,7 @@
     </div>
     <div class="paint-export"><span>完成后，记得导出一份作品。</span><div><button type="button" id="bead-export-chart" class="soft-button" hidden>色号图纸 PNG ↓</button><button type="button" id="bead-export-csv" class="soft-button" hidden>用量清单 CSV ↓</button><label for="paint-export-scale">PNG 缩放<select id="paint-export-scale"><option value="1">原始像素</option><option value="4">放大 4 倍</option><option value="8" selected>放大 8 倍</option><option value="16">放大 16 倍</option></select></label><button type="button" id="paint-save-project" class="soft-button">保存画稿 JSON ↓</button><button type="button" id="paint-export-png" class="primary-button">导出 PNG ↓</button></div></div>
   </dialog>
+  <script type="module" src="./src/hero-entry.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>

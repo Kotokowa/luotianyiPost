@@ -17,6 +17,46 @@
   position: relative;
   width: min(100cqw, calc(100cqh * 2560 / 1664));
   aspect-ratio: 2560 / 1664;
+  visibility: hidden;
+}
+
+.hero.is-ready .hero-scene {
+  visibility: visible;
+}
+
+.hero-loader {
+  position: absolute;
+  right: clamp(16px, 3vw, 36px);
+  bottom: 20px;
+  width: 104px;
+  height: 88px;
+  pointer-events: none;
+}
+
+.hero-loader img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  clip-path: inset(var(--hero-unloaded, 100%) 0 0 0);
+  transition: clip-path 160ms linear;
+}
+
+.hero-loader[hidden], .hero-retry[hidden] {
+  display: none;
+}
+
+.hero-retry {
+  position: absolute;
+  right: clamp(16px, 3vw, 36px);
+  bottom: 24px;
+  border: 1px solid #b9deef;
+  border-radius: 18px;
+  background: #f4fbff;
+  color: #245e7c;
+  font: inherit;
+  font-size: 11px;
+  padding: 9px 13px;
 }
 
 .hero-layer {
@@ -70,5 +110,13 @@
 
   .hero.is-animating .hero-layer {
     will-change: opacity;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-loader {
+    width: 80px;
+    height: 68px;
+    bottom: 16px;
   }
 }

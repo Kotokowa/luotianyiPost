@@ -1,9 +1,6 @@
 import { Runner } from './engine.js';
 import { characterReady, drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
 import { initPaintRoom } from './paint.js';
-import { initHero } from './hero.js';
-
-initHero(document.querySelector('#home'));
 
 const $ = selector => document.querySelector(selector);
 const storage = {

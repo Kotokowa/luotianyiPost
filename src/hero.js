@@ -1,3 +1,5 @@
+import { loadHeroImages } from './hero-loader.js';
+
 export const HERO_MOTION = Object.freeze({
   width: 2560,
   height: 1664,
@@ -54,23 +56,29 @@ export async function initHero(hero) {
   hero.style.setProperty('--hero-mobile-crop', config.mobileCrop);
   const mobile = matchMedia('(max-width: 680px)');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const earlyFades = mobile.matches && !reduced.matches && tianyi.animate
-    ? [tianyi, keyboard].map(image => image.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 1, fill: 'both' }))
-    : [];
-  await Promise.allSettled([tianyi.decode(), keyboard.decode()]);
+  const art = hero.querySelector('.hero-art');
+  const loader = hero.querySelector('#hero-loader');
+  const retry = hero.querySelector('#hero-retry');
   let animations = [];
   let version = 0;
+  let ready = false;
+  let pending = false;
+  let controller;
+  let inView = hero.getBoundingClientRect().bottom > 0;
 
   function stop() {
     version++;
-    for (const animation of [...earlyFades, ...animations]) animation.cancel();
+    for (const animation of animations) animation.cancel();
     animations = [];
     hero.classList.remove('is-animating');
   }
 
   function start() {
+    if (!ready) return;
+    if (!inView || document.hidden || document.querySelector('dialog[open]')) { pending = true;return; }
+    pending = false;
     stop();
-    if (reduced.matches || !tianyi.animate) return;
+    if (reduced.matches || !tianyi.animate) { hero.classList.add('is-ready');return; }
     const run = version;
     hero.classList.add('is-animating');
     if (mobile.matches) {
@@ -88,11 +96,13 @@ export async function initHero(hero) {
     }
     const sharedStart = document.timeline.currentTime;
     for (const animation of animations) animation.startTime = sharedStart;
+    hero.classList.add('is-ready');
     Promise.allSettled(animations.map(animation => animation.finished)).then(() => { if (run === version) stop(); });
     syncVisibility();
   }
 
   function syncVisibility() {
+    if (pending) start();
     for (const animation of animations) {
       if (document.hidden && animation.playState === 'running') animation.pause();
       else if (!document.hidden && animation.playState === 'paused') animation.play();
@@ -102,6 +112,41 @@ export async function initHero(hero) {
   mobile.addEventListener('change', start);
   reduced.addEventListener('change', start);
   document.addEventListener('visibilitychange', syncVisibility);
-  window.addEventListener('pagehide', stop);
-  start();
+  document.addEventListener('close', () => { if (pending) start(); }, true);
+  const observer = new IntersectionObserver(entries => {
+    inView = entries[0].isIntersecting;
+    if (pending && inView) start();
+  });
+  observer.observe(hero);
+
+  async function load() {
+    if (controller) return;
+    controller = new AbortController();
+    const current = controller;
+    retry.hidden = true;
+    loader.hidden = false;
+    art.setAttribute('aria-busy', 'true');
+    try {
+      await loadHeroImages([tianyi, keyboard], value => {
+        loader.style.setProperty('--hero-unloaded', `${100 - value}%`);
+        loader.setAttribute('aria-valuenow', String(Math.floor(value)));
+      }, { signal: current.signal });
+      ready = true;
+      loader.hidden = true;
+      art.setAttribute('aria-busy', 'false');
+      art.removeAttribute('aria-hidden');
+      start();
+    } catch {
+      if (!current.signal.aborted) {
+        loader.hidden = true;
+        retry.hidden = false;
+        art.setAttribute('aria-busy', 'false');
+      }
+    } finally { if (controller === current) controller = null; }
+  }
+
+  retry.addEventListener('click', load);
+  window.addEventListener('pagehide', () => { controller?.abort();stop(); });
+  window.addEventListener('pageshow', event => { if (event.persisted && !ready) load(); });
+  load();
 }
