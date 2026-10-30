@@ -32,8 +32,14 @@ test('a bun heals once, is removed, and never exceeds three hearts', () => {
   const { game, events } = setup();game.lives = 2;
   const bun = () => ({ x: game.player.x + 36, y: game.ground - 44, w: 28, h: 24 });
   game.buns.push(bun());game.step(1 / 120);assert.equal(game.lives, 3);assert.equal(game.buns.length, 0);
+  assert.equal(game.bonusScore, 0);
   game.buns.push(bun());game.step(1 / 120);assert.equal(game.lives, 3);
+  assert.equal(game.bonusScore, 15);
+  assert.equal(game.score, Math.floor(game.distance / 12) + 15);
+  game.step(1 / 120);assert.equal(game.bonusScore, 15);
   assert.deepEqual(events.filter(e => ['heal','full'].includes(e)), ['heal','full']);
+  game.buns.push(bun());game.step(1 / 120);assert.equal(game.bonusScore, 30);
+  game.reset();assert.equal(game.score, 0);assert.equal(game.bonusScore, 0);
 });
 test('jump clears a ground obstacle and holding airborne input does not double jump', () => {
   const { game } = setup();game.obstacles.push(obstacle(game, game.player.x + 115));
@@ -59,7 +65,7 @@ test('random spawn schedules keep the late-run interval above the density cap', 
     let lastSpawn = 0;let spawns = 0;
     for(let i = 0; i < 120 * 45; i++) {
       const before = game.obstacleTimer;game.step(1 / 120);
-      if (game.obstacleTimer > before) { if (lastSpawn) assert.ok(game.time - lastSpawn >= RULES.obstacleGap / 1.5 - .01);lastSpawn = game.time;spawns++; }
+      if (game.obstacleTimer > before) { if (lastSpawn) assert.ok(game.time - lastSpawn >= RULES.obstacleGap / 2.1 - .01);lastSpawn = game.time;spawns++; }
     }
     assert.ok(spawns > 15);
   }
@@ -117,12 +123,12 @@ test('speed rises with score, mobile pace leaves reaction time, and reset restor
   game.distance = 400 * 12;assert.ok(game.speed > initial);assert.equal(game.night, 1);
   game.distance = 620 * 12;assert.equal(game.night, 0);
   game.resize(320, 330);game.distance = 100000;
-  assert.ok((game.width - game.player.x - 64) / game.speed > .38);
-  assert.equal(game.pace,3.5);assert.equal(game.density,1.5);
+  assert.ok((game.width - game.player.x - 64) / game.speed > .34);
+  assert.equal(game.pace,4);assert.equal(game.density,2.1);
   game.duck(true);game.reset();assert.equal(game.night, 0);assert.equal(game.duckHeld, false);
 });
 
-test('late-run density grows to 1.5 while bun cadence stays unchanged', () => {
+test('late-run density grows to 2.1 while bun cadence stays unchanged', () => {
   const counts=[];
   for (const score of [0,2000]) {
     const game = new Runner({ random:()=>.5 });game.reset();game.player.x=-10000;
@@ -137,9 +143,9 @@ test('late-run density grows to 1.5 while bun cadence stays unchanged', () => {
     counts.push({obstacles,buns});
   }
   assert.equal(counts[0].buns,counts[1].buns);
-  assert.ok(counts[1].obstacles/counts[0].obstacles>1.4 && counts[1].obstacles/counts[0].obstacles<1.6);
+  assert.ok(counts[1].obstacles/counts[0].obstacles>2 && counts[1].obstacles/counts[0].obstacles<2.2);
   const {game}=setup();game.distance=1000*12;
-  assert.equal(game.density,1.25);game.distance=0;assert.equal(game.density,1);
+  assert.equal(game.density,1.55);game.distance=0;assert.equal(game.density,1);
 });
 
 test('night transitions are gradual, repeat, and emit one event per boundary', () => {

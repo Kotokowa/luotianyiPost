@@ -1,4 +1,4 @@
-export const RULES = Object.freeze({ gravity: 1540, jump: -600, maxLives: 3, invincibility: 1.45, baseSpeed: 230, maxSpeed: 805, playerHeight: 88, slideHeight: 34, obstacleGap: 1.45 });
+export const RULES = Object.freeze({ gravity: 1540, jump: -600, maxLives: 3, invincibility: 1.45, baseSpeed: 230, maxSpeed: 920, maxDensity: 2.1, fullBunScore: 15, playerHeight: 88, slideHeight: 34, obstacleGap: 1.45 });
 
 export function overlaps(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -14,11 +14,11 @@ export class Runner {
     this.state = 'idle';
   }
   get ground() { return this.height - 65; }
-  get score() { return Math.floor(this.distance / 12); }
+  get score() { return Math.floor(this.distance / 12) + this.bonusScore; }
   get speed() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .42) * this.viewportPace; }
   get viewportPace() { return Math.min(1, Math.max(.66, this.width / 720)); }
   get pace() { return Math.min(RULES.maxSpeed, RULES.baseSpeed + this.score * .42) / RULES.baseSpeed; }
-  get density() { return 1 + Math.min(1, Math.max(0, (this.score - 300) / 1400)) * .5; }
+  get density() { return 1 + Math.min(1, Math.max(0, (this.score - 300) / 1400)) * (RULES.maxDensity - 1); }
   get ducking() { return this.duckHeld && this.player.grounded; }
   get night() {
     const cycle = this.score % 800;
@@ -28,6 +28,7 @@ export class Runner {
   reset() {
     this.state = 'running';
     this.distance = 0;
+    this.bonusScore = 0;
     this.time = 0;
     this.lives = 3;
     this.invincible = 0;
@@ -129,6 +130,7 @@ export class Runner {
         bun.collected = true;
         const before = this.lives;
         this.lives = Math.min(RULES.maxLives, this.lives + 1);
+        if (before === RULES.maxLives) this.bonusScore += RULES.fullBunScore;
         this.burst(bun.x + 14, bun.y, '#ffce83');
         this.onEvent(this.lives > before ? 'heal' : 'full');
       }
