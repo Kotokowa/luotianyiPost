@@ -9,6 +9,9 @@
   <link rel="icon" href="./assets/favicon.png" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./hero.css">
+  <link rel="preload" href="./assets/hero-tianyi.webp" as="image" type="image/webp" fetchpriority="high">
+  <link rel="preload" href="./assets/hero-keyboard.webp" as="image" type="image/webp">
   <link rel="preload" href="./assets/tianyi-run.webp" as="image" type="image/webp">
 </head>
 <body>
@@ -18,13 +21,15 @@
   </header>
   <main>
     <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="hero-art" role="img" aria-label="青蓝天空下，云朵与远山相拥的梦幻风景"></div>
-      <div class="hero-grain"></div>
-      <div class="hero-copy"><div class="eyebrow"><span></span> A LITTLE WORLD, A LOT OF JOY</div><h1 id="hero-title">把日子，<br>过成一首<span class="song">歌<svg viewBox="0 0 180 18" aria-hidden="true"><path d="M4 12Q80-5 173 9M22 16Q95 4 160 13"/></svg></span>。</h1><p class="development-note">小天地还在开发中，正在一点点长大～<br>预计 2026 年底完成，先来玩一会儿吧！</p><a class="hero-link" href="#explore">今天，也要开心呀 <span aria-hidden="true">↗</span></a></div>
-      <span class="hero-note">遇见天依 · 遇见好心情</span>
-      <div class="hero-stamp" aria-hidden="true"><span>✧</span>让快乐<br>自由生长</div>
+      <h1 id="hero-title" class="sr-only">欢迎来到小洛包次元</h1>
+      <div class="hero-art">
+        <div class="hero-scene" id="hero-scene">
+          <img class="hero-layer hero-tianyi" src="./assets/hero-tianyi.webp" width="2560" height="1664" alt="洛天依伸出手，琴键在身前轻盈环绕" decoding="async" fetchpriority="high">
+          <img class="hero-layer hero-keyboard" src="./assets/hero-keyboard.webp" width="2560" height="1664" alt="" decoding="async">
+        </div>
+      </div>
+      <p class="hero-development">网站正在开发中，预计 2026 年底完成。</p>
       <a class="scroll-cue" href="#explore" aria-label="向下探索"><svg viewBox="0 0 30 18" aria-hidden="true"><path d="m4 4 11 10L26 4"/></svg></a>
-      <span class="hero-index">01 / LITTLE BEGINNINGS</span>
     </section>
     <section class="explore" id="explore" aria-labelledby="explore-title">
       <div class="section-top"><div><div class="eyebrow"><span></span> MAKE YOURSELF AT HOME</div><h2 id="explore-title">今天，想玩点什么<span>？</span></h2><p>小小的快乐，在这里慢慢收集。</p></div><span class="section-doodle" aria-hidden="true"><span class="tiandian-lemon"><img src="./assets/tiandian-pink-lemon.webp" width="900" height="1300" alt="" decoding="async"></span><small>HAVE A NICE DAY</small></span></div>
