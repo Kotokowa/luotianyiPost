@@ -7,6 +7,7 @@ const tick = milliseconds => new Promise(resolve => setTimeout(resolve, millisec
 
 test('all nine mirror mappings retain the original path and accept PNG or WebP names', () => {
   assert.equal(Object.keys(IMAGE_MIRRORS).length, 9);
+  assert.equal(IMAGE_MIRRORS['tianyi-paint'], 'https://bee-reg-ab.imagency.cn/mr/202611/10/6af2bcad98ea7.png');
   assert.equal(mirrorFor('./assets/tianyi-paint.png'), mirrorFor('https://luoty.vip/assets/tianyi-paint.webp'));
   assert.deepEqual(imageSources(source), [source, IMAGE_MIRRORS['hero-tianyi']]);
   assert.equal(mirrorFor('./unrelated.png'), undefined);

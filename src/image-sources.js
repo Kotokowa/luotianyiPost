@@ -1,6 +1,6 @@
 const host = 'https://bee-reg-ab.imagency.cn/mr/202611/10/';
 export const IMAGE_MIRRORS = Object.freeze({
-  'tianyi-paint': `${host}6af2b4229a3d6.png`,
+  'tianyi-paint': `${host}6af2bcad98ea7.png`,
   landscape: `${host}6af2ae0fdddb6.png`,
   'tiandian-pink-lemon': `${host}6af2ae1252832.png`,
   'tianyi-run': `${host}6af2ae15dc91d.png`,
