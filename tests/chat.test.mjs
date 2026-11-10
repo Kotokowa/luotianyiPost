@@ -134,3 +134,16 @@ test('old own-message IDs recover only their own bodies when the user consents t
   assert.deepEqual(chat.node('#messages').children.map(row => row.children[1]?.textContent), [mine.text]);
   assert.equal(chat.requests.filter(request => request.method === 'GET').length, 1);
 });
+
+test('local submissions use the same word and URL restrictions without any network access', async context => {
+  const chat = setup(context);
+  chat.room.open();chat.click('#chat-consent-local');
+  await chat.submit('https://example.org');
+  assert.equal(chat.values.has('luoty.chat.messages.v1'), false);
+  assert.match(chat.node('#message-input').validation, /网址/);
+  await chat.submit('fuck');
+  assert.equal(chat.values.has('luoty.chat.messages.v1'), false);
+  await chat.submit('联系 me@example.org，@洛天依');
+  assert.equal(chat.values.get('luoty.chat.messages.v1')[0].text, '联系 me#example.org，@洛天依');
+  assert.equal(chat.requests.length, 0);
+});

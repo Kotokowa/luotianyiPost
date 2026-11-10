@@ -1,4 +1,11 @@
 .chat-dialog{position:fixed}
+.chat-identity{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:10px 0;font-size:10px;color:#436b82}
+.chat-identity .nickname-label{margin:0;gap:8px;flex-shrink:0}
+.chat-identity .nickname-label input{width:128px}
+.nickname-edit{display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:0;border-radius:5px;background:transparent;color:inherit;padding:4px}
+.nickname-edit:hover{background:#dff3ff}
+.fa-pen{width:11px;height:11px}
+.chat-privacy{font-size:inherit;line-height:1.7;text-align:right}
 #chat-dialog [hidden]{display:none!important}
 #chat-content{min-width:0}
 .chat-consent{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;background:#f4fbfff2;backdrop-filter:blur(8px);border-radius:inherit}
@@ -14,3 +21,4 @@
 .chat-send-menu button:hover,.chat-send-menu button:focus-visible{background:#e5f6ff}
 .chat-send-group button:disabled{opacity:.6;cursor:wait}
 @media(max-width:600px){.chat-consent{padding:20px}.chat-consent .send-button{font-size:12px;letter-spacing:0}#chat-send{font-size:11px;letter-spacing:0;padding:11px 9px;gap:5px}#chat-send-toggle{padding:0 7px}.chat-dialog .composer{gap:3px}.chat-dialog .composer>input{padding:9px 4px;font-size:11px}}
+@media(max-width:600px){.chat-identity{gap:8px}.chat-identity .nickname-label{font-size:10px;gap:5px}.chat-identity .nickname-label input{width:82px;font-size:10px}.nickname-edit{width:19px}.chat-privacy{font-size:10px}}

@@ -2,6 +2,9 @@ import { Runner } from './engine.js';
 import { characterReady, drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
 import { initPaintRoom } from './paint.js';
 import { initChatRoom } from './chat.js';
+import { initFriendLinks } from './friends.js';
+
+initFriendLinks();
 
 const $ = selector => document.querySelector(selector);
 const storage = {

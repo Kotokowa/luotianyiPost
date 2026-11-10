@@ -72,3 +72,19 @@ test('database failure returns an error rather than a false successful send', as
   const env = { DB: { prepare() { throw new Error('Daily quota exhausted'); } }, ALLOWED_ORIGINS: 'https://luoty.vip' };
   assert.equal((await worker.fetch(request('GET'), env)).status, 503);
 });
+
+test('backend independently rejects blocked words and forbidden sites without writing data', async () => {
+  const env = { DB: database(), ALLOWED_ORIGINS: 'https://luoty.vip' };
+  for (const [name, text] of [['云', '傻逼'], ['fuck', '正常'], ['云', 'https://example.org'], ['云', 'https://safe.com@evil.net']]) {
+    const response = await worker.fetch(request('POST', { id: 'validation-12345678', name, text }), env);
+    assert.equal(response.status, 400);
+  }
+  assert.equal(env.DB.calls.length, 0);
+});
+
+test('backend stores masked email text even when frontend validation is bypassed', async () => {
+  const env = { DB: database(), ALLOWED_ORIGINS: 'https://luoty.vip' };
+  const response = await worker.fetch(request('POST', { id: 'privacy-test-123456', name: '云', text: '联系 me@example.org 或看 https://example.com' }), env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).message.text, '联系 me#example.org 或看 https://example.com');
+});

@@ -1,4 +1,5 @@
 import { CHAT_API } from './chat-config.js';
+import { moderateMessage } from './moderation.js';
 
 const chatKey = 'luoty.chat.messages.v1';
 const ownKey = 'luoty.chat.shared.v1';
@@ -84,7 +85,10 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
       method, credentials: 'omit', signal: AbortSignal.timeout(15000),
       ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})
     });
-    if (!response.ok) throw new Error('云端暂时无法连接');
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(response.status === 400 && typeof data?.error === 'string' ? data.error : '云端暂时无法连接');
+    }
     return response.json();
   }
 
@@ -132,13 +136,22 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
     }
   });
   input.addEventListener('input', () => input.setCustomValidity(''));
-  send.addEventListener('click', () => input.setCustomValidity(''));
+  nickname.addEventListener('input', () => nickname.setCustomValidity(''));
+  find('#nickname-edit').addEventListener('click', () => { nickname.focus();nickname.select(); });
+  send.addEventListener('click', () => { input.setCustomValidity('');nickname.setCustomValidity(''); });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (busy) return;
-    const text = input.value.trim();
-    const name = nickname.value.trim() || '路过的小云朵';
-    if (!text || text.length > 500 || name.length > 16) return;
+    const originalText = input.value.trim();
+    const originalName = nickname.value.trim() || '路过的小云朵';
+    if (!originalText || originalText.length > 500 || originalName.length > 16) return;
+    const checked = moderateMessage({ name: originalName, text: originalText });
+    if (checked.error) {
+      const field = checked.field === 'name' ? nickname : input;
+      field.setCustomValidity(checked.error);field.reportValidity();return;
+    }
+    const { name, text } = checked;
+    if (nickname.value.trim()) nickname.value = name;
     storage.write('luoty.chat.nickname.v1', name);
     const share = choice === 'cloud' && mode === 'cloud';
     if (!pending || pending.text !== text || pending.name !== name || pending.share !== share) pending = { id: crypto.randomUUID(), name, text, share };
@@ -155,7 +168,7 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
         message.client = clientId;receiveLocal(message);channel?.postMessage(message);
       }
       pending = null;
-      if (input.value.trim() === text) input.value = '';
+      if (input.value.trim() === originalText) input.value = '';
       log.scrollTop = log.scrollHeight;
       if (active) input.focus();
     } catch (error) {

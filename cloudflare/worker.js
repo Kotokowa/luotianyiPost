@@ -1,3 +1,5 @@
+import { moderateMessage } from '../src/moderation.js';
+
 function json(data, status = 200, headers = {}) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 }
@@ -25,8 +27,11 @@ export default {
       let data;
       try { data = JSON.parse(body); } catch { return json({ error: 'Invalid JSON' }, 400, headers); }
       if (!data || typeof data.id !== 'string' || !/^[a-zA-Z0-9-]{16,100}$/.test(data.id) || typeof data.name !== 'string' || typeof data.text !== 'string') return json({ error: 'Invalid message' }, 400, headers);
-      const name = data.name.trim(), text = data.text.trim();
-      if (!name || name.length > 16 || !text || text.length > 500) return json({ error: 'Invalid message' }, 400, headers);
+      const rawName = data.name.trim(), rawText = data.text.trim();
+      if (!rawName || rawName.length > 16 || !rawText || rawText.length > 500) return json({ error: 'Invalid message' }, 400, headers);
+      const checked = moderateMessage({ name: rawName, text: rawText });
+      if (checked.error) return json({ error: checked.error, field: checked.field }, 400, headers);
+      const { name, text } = checked;
       await env.DB.prepare('INSERT INTO messages (id, name, text, time) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(id) DO NOTHING').bind(data.id, name, text, Date.now()).run();
       const message = await env.DB.prepare('SELECT id, name, text, time FROM messages WHERE id = ?1').bind(data.id).first();
       return json({ message }, 200, headers);

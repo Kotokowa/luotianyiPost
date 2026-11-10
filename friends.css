@@ -1,0 +1,13 @@
+.friend-links{position:relative;align-self:stretch;display:flex;align-items:center}
+.friends-toggle{border:0;background:transparent;color:inherit;padding:10px 0;display:inline-flex;align-items:center;gap:6px;font:inherit;white-space:nowrap}
+.friends-toggle svg{width:10px;height:10px;transition:transform .3s}
+.friend-links.is-open .friends-toggle svg{transform:rotate(180deg)}
+.friends-panel{position:absolute;top:100%;right:-18px;min-width:172px;display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transform:translateY(-8px);transition:grid-template-rows .32s ease,opacity .25s,transform .32s,visibility .32s;z-index:25;padding-top:8px}
+.friend-links.is-open .friends-panel{grid-template-rows:1fr;opacity:1;visibility:visible;transform:translateY(0)}
+.friends-clip{overflow:hidden;min-height:0;border-radius:13px;box-shadow:0 12px 28px #174b6920}
+.friends-list{display:flex;flex-direction:column;gap:3px;padding:9px;border:1px solid #b9deef;border-radius:13px;background:#f4fbff}
+.friends-list a{padding:11px 12px;border-radius:8px;font-size:12px;white-space:nowrap;transition:background .2s}
+.friends-list a:hover,.friends-list a:focus-visible{background:#dff3ff}
+@media(max-width:600px){.topbar nav{gap:10px}.friends-toggle{gap:4px}.friends-panel{right:-12px;min-width:155px}.friends-list a{font-size:11px;padding:11px 9px}}
+@media(max-width:420px){.topbar{padding-left:4%;padding-right:4%}.dialog-open .topbar{padding-right:calc(4% + var(--scrollbar,0px))}.topbar .brand{gap:6px;font-size:12px;letter-spacing:1px}.topbar .brand small{display:none}.topbar .brand-mark{width:36px;height:34px}.topbar nav{font-size:10px;gap:9px}.topbar .nav-game{padding:7px 9px;gap:4px}.topbar .nav-game .tiny-star{display:none}}
+@media(prefers-reduced-motion:reduce){.friends-panel,.friends-toggle svg{transition:none}}
