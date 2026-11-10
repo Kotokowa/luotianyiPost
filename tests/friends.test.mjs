@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { initFriendLinks } from '../src/friends.js';
+
+test('the final friend link opens the public feedback email address', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const list = html.match(/<div class="friends-list">([\s\S]*?)<\/div>/)[1];
+  const links = [...list.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];
+  assert.equal(links.length, 5);
+  assert.equal(links.at(-1)[1], 'mailto:feedback@luoty.vip');
+  assert.equal(links.at(-1)[2], '反馈邮箱');
+});
 
 function setup(context) {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'document');
