@@ -2,6 +2,7 @@ import { CHAT_API } from './chat-config.js';
 
 const chatKey = 'luoty.chat.messages.v1';
 const ownKey = 'luoty.chat.shared.v1';
+const ownMessagesKey = 'luoty.chat.own-messages.v1';
 
 export function validMessage(value) {
   return value && typeof value.id === 'string' && value.id.length <= 100 && typeof value.name === 'string' && value.name.length <= 16 && typeof value.text === 'string' && value.text.length <= 500 && Number.isSafeInteger(value.time) && value.time >= 0;
@@ -19,10 +20,12 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
   const menu = find('#chat-send-menu');
   const log = find('#messages');
   const saved = storage.read(chatKey, []);
-  let localMessages = Array.isArray(saved) ? saved.filter(validMessage).slice(-150) : [];
+  let localMessages = Array.isArray(saved) ? saved.filter(validMessage) : [];
+  const storedOwnMessages = storage.read(ownMessagesKey, []);
+  let ownMessages = Array.isArray(storedOwnMessages) ? storedOwnMessages.filter(validMessage) : [];
   let cloudMessages = [];
   const storedOwn = storage.read(ownKey, []);
-  const ownIds = new Set(Array.isArray(storedOwn) ? storedOwn.filter(value => typeof value === 'string').slice(-150) : []);
+  const ownIds = new Set([...(Array.isArray(storedOwn) ? storedOwn.filter(value => typeof value === 'string') : []), ...ownMessages.map(message => message.id)]);
   const storedName = storage.read('luoty.chat.nickname.v1', '');
   nickname.value = typeof storedName === 'string' ? storedName.slice(0, 16) : '';
   let clientId;
@@ -34,7 +37,7 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
 
   function render() {
     const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
-    const messages = choice === 'cloud' ? [...localMessages, ...cloudMessages].sort((first, second) => first.time - second.time || first.id.localeCompare(second.id)) : localMessages;
+    const messages = [...new Map([...localMessages, ...ownMessages, ...(choice === 'cloud' ? cloudMessages : [])].map(message => [message.id, message])).values()].sort((first, second) => first.time - second.time || first.id.localeCompare(second.id));
     log.replaceChildren();
     if (!messages.length) {
       const empty = document.createElement('div');empty.className = 'empty-chat';
@@ -54,8 +57,15 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
 
   function receiveLocal(message) {
     if (!validMessage(message) || localMessages.some(value => value.id === message.id)) return;
-    localMessages = [...localMessages, message].sort((first, second) => first.time - second.time).slice(-150);
+    localMessages = [...localMessages, message].sort((first, second) => first.time - second.time);
     storage.write(chatKey, localMessages);render();
+  }
+
+  function rememberOwn(messages) {
+    const own = messages.filter(message => ownIds.has(message.id));
+    if (!own.length) return;
+    ownMessages = [...new Map([...ownMessages, ...own].map(message => [message.id, message])).values()];
+    storage.write(ownMessagesKey, ownMessages);
   }
 
   function setMode(value) {
@@ -85,6 +95,7 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
         const data = await api('GET');
         if (!Array.isArray(data.messages)) return;
         const received = data.messages.filter(validMessage);
+        rememberOwn(received);
         cloudMessages = [...new Map([...received, ...cloudMessages].map(message => [message.id, message])).values()].sort((first, second) => first.time - second.time || first.id.localeCompare(second.id)).slice(-150);
         render();
       } catch {} finally { loading = null; }
@@ -139,7 +150,7 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
         if (!validMessage(data.message)) throw new Error('云端暂时无法连接');
         cloudMessages = [...cloudMessages.filter(value => value.id !== data.message.id), data.message].slice(-150);
         ownIds.add(data.message.id);
-        storage.write(ownKey, [...ownIds].slice(-150));render();
+        storage.write(ownKey, [...ownIds]);rememberOwn([data.message]);render();
       } else {
         message.client = clientId;receiveLocal(message);channel?.postMessage(message);
       }
@@ -153,9 +164,14 @@ export function initChatRoom(dialog, { storage, endpoint = CHAT_API, request = f
     } finally { busy = false;send.disabled = false;toggle.disabled = false; }
   });
   window.addEventListener('storage', event => {
-    if (event.key !== chatKey) return;
-    const messages = storage.read(chatKey, []);
-    if (Array.isArray(messages)) { localMessages = messages.filter(validMessage).slice(-150);render(); }
+    if (event.key === chatKey) {
+      const messages = storage.read(chatKey, []);
+      if (Array.isArray(messages)) { localMessages = messages.filter(validMessage);render(); }
+    }
+    if (event.key === ownMessagesKey) {
+      const messages = storage.read(ownMessagesKey, []);
+      if (Array.isArray(messages)) { ownMessages = messages.filter(validMessage);for (const message of ownMessages) ownIds.add(message.id);render(); }
+    }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void refresh(); });
   window.addEventListener('pagehide', () => { active = false;clearInterval(polling);polling = null; });

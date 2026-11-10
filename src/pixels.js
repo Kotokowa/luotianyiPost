@@ -1,9 +1,7 @@
+import { loadAssetImage } from './image-sources.js';
+
 const character = new Image();
-export const characterReady = new Promise((resolve, reject) => {
-  character.onload = resolve;
-  character.onerror = () => reject(new Error('小洛还没准备好，请刷新再试试～'));
-});
-character.src = new URL('../assets/tianyi-run.webp', import.meta.url).href;
+export const characterReady = loadAssetImage(character, new URL('../assets/tianyi-run.webp', import.meta.url).href).then(() => character.decode());
 
 export function drawTianyi(ctx, x, y, { scale = 1, frame = 0, jumping = false, ducking = false } = {}) {
   if (!character.complete || !character.naturalWidth) return;

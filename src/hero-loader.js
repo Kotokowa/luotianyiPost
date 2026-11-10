@@ -1,3 +1,5 @@
+import { raceImageSources, decodeImage } from './image-sources.js';
+
 export async function loadHeroImages(images, onProgress, { signal, request = fetch, urls = URL } = {}) {
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -13,8 +15,9 @@ export async function loadHeroImages(images, onProgress, { signal, request = fet
   }
   try {
     onProgress(0);
-    const blobs = await Promise.all(images.map(async (image, index) => {
-      const response = await request(image.dataset.src, { signal: controller.signal, priority: 'low' });
+    const blobs = await Promise.all(images.map((image, index) => raceImageSources(image.dataset.src, async (source, attemptSignal) => {
+      let bytesReceived = 0;
+      const response = await request(source, { signal: attemptSignal, priority: 'low', credentials: 'omit', referrerPolicy: 'no-referrer' });
       if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
       const length = Number(response.headers.get('Content-Length'));
       if (length > 0 && !response.headers.get('Content-Encoding')) totals[index] = length;
@@ -26,18 +29,24 @@ export async function loadHeroImages(images, onProgress, { signal, request = fet
             const { done, value } = await reader.read();
             if (done) break;
             chunks.push(value);
-            received[index] += value.byteLength;
+            bytesReceived += value.byteLength;received[index] = bytesReceived;
             progress();
           }
         } finally { reader.releaseLock(); }
       } else {
         const bytes = await response.arrayBuffer();
-        chunks.push(bytes);received[index] = bytes.byteLength;progress();
+        chunks.push(bytes);bytesReceived = bytes.byteLength;received[index] = bytesReceived;progress();
       }
-      controller.signal.throwIfAborted();
-      if (!received[index]) throw new Error('Empty image response');
-      return new Blob(chunks, { type: response.headers.get('Content-Type') || 'image/webp' });
-    }));
+      attemptSignal.throwIfAborted();
+      if (!bytesReceived) throw new Error('Empty image response');
+      const blob = new Blob(chunks, { type: response.headers.get('Content-Type') || 'image/webp' });
+      if (typeof Image !== 'undefined') {
+        const validationURL = urls.createObjectURL(blob);
+        try { await decodeImage(validationURL, attemptSignal); }
+        finally { urls.revokeObjectURL(validationURL); }
+      }
+      return blob;
+    }, { signal: controller.signal })));
     controller.signal.throwIfAborted();
     for (const [index, image] of images.entries()) {
       const url = urls.createObjectURL(blobs[index]);

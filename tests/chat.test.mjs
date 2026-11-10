@@ -16,7 +16,7 @@ class Element {
   querySelectorAll() { return this.children; }
 }
 
-function setup(context) {
+function setup(context, initial = new Map(), remoteMessages = []) {
   const originals = Object.fromEntries(['document', 'window', 'sessionStorage', 'BroadcastChannel', 'MutationObserver'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   context.after(() => {
     for (const [key, descriptor] of Object.entries(originals)) {
@@ -38,7 +38,7 @@ function setup(context) {
   const cloud = new Element();cloud.dataset.chatMode = 'cloud';
   const local = new Element();local.dataset.chatMode = 'local';
   node('#chat-send-menu').children = [cloud, local];
-  const values = new Map();
+  const values = initial;
   const storage = { read: (key, fallback) => values.get(key) ?? fallback, write: (key, value) => { values.set(key, value);return true; } };
   const dialog = Object.assign(new Element(), { querySelector: node, contains: () => true, open: true });
   const requests = [];
@@ -46,7 +46,7 @@ function setup(context) {
     storage, endpoint: 'https://chat.example',
     request: async (url, options) => {
       requests.push(options);
-      const data = options.body ? { message: { ...JSON.parse(options.body), time: Date.now() } } : { messages: [] };
+      const data = options.body ? { message: { ...JSON.parse(options.body), time: Date.now() } } : { messages: remoteMessages };
       return Response.json(data);
     }
   });
@@ -92,6 +92,7 @@ test('cloud consent permits sharing while the dropdown can still save privately'
   await chat.submit('分享');
   assert.equal(chat.requests.filter(request => request.method === 'POST').length, 1);
   assert.equal(chat.values.has('luoty.chat.messages.v1'), false);
+  assert.equal(chat.values.get('luoty.chat.own-messages.v1')[0].text, '分享');
   chat.local.events.get('click')();
   assert.equal(chat.node('#chat-send-label').textContent, '记在小天地');
   assert.equal(chat.node('#chat-web-icon').hidden, true);
@@ -103,4 +104,33 @@ test('cloud consent permits sharing while the dropdown can still save privately'
 test('malformed cached messages are not rendered', () => {
   assert.equal(Boolean(validMessage({ id: 'test', name: '云', text: '想法', time: NaN })), false);
   assert.equal(Boolean(validMessage({ id: 'test', name: '云', text: '想'.repeat(501), time: 1 })), false);
+});
+
+test('local mode shows own cloud-message backups but never other peoples cached messages', async context => {
+  const mine = { id: 'own-cloud-message', name: '我', text: '自己曾经分享的想法', time: 1 };
+  const other = { id: 'other-cloud-message', name: '别人', text: '缓存中的他人留言', time: 2 };
+  const initial = new Map([
+    ['luoty.chat.own-messages.v1', [mine]],
+    ['luoty.chat.cloud-cache.v1', [other]],
+    ['luoty.chat.messages.v1', [{ id: 'private-message', name: '我', text: '私藏想法', time: 3 }]]
+  ]);
+  const chat = setup(context, initial, [mine, other]);
+  chat.room.open();chat.click('#chat-consent-local');
+  assert.equal(chat.requests.length, 0);
+  const displayed = chat.node('#messages').children.map(row => row.children[1]?.textContent);
+  assert.deepEqual(displayed, [mine.text, '私藏想法']);
+  await chat.submit('新增私藏');assert.equal(chat.requests.length, 0);
+});
+
+test('old own-message IDs recover only their own bodies when the user consents to cloud access', async context => {
+  const mine = { id: 'legacy-own', name: '我', text: '旧版分享', time: 1 };
+  const other = { id: 'not-mine', name: '别人', text: '别人的内容', time: 2 };
+  const chat = setup(context, new Map([['luoty.chat.shared.v1', [mine.id]]]), [mine, other]);
+  chat.room.open();chat.click('#chat-consent-cloud');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(chat.values.get('luoty.chat.own-messages.v1'), [mine]);
+  globalThis.window.events.get('pageshow')({ persisted: true });
+  chat.click('#chat-consent-local');
+  assert.deepEqual(chat.node('#messages').children.map(row => row.children[1]?.textContent), [mine.text]);
+  assert.equal(chat.requests.filter(request => request.method === 'GET').length, 1);
 });
