@@ -1,6 +1,7 @@
 import { Runner } from './engine.js';
 import { characterReady, drawLandscape, drawTianyi, drawBun, drawObstacle, renderRunner } from './pixels.js';
 import { initPaintRoom } from './paint.js';
+import { initChatRoom } from './chat.js';
 
 const $ = selector => document.querySelector(selector);
 const storage = {
@@ -22,6 +23,7 @@ let lastFocus = null;
 let toastTimer;
 const gameDialog = $('#game-dialog');
 const chatDialog = $('#chat-dialog');
+const chatRoom = initChatRoom(chatDialog, { storage });
 const paintDialog = $('#paint-dialog');
 const lyricsDialog = $('#lyrics-dialog');
 const campaignDialog = $('#campaign-dialog');
@@ -211,68 +213,10 @@ $('#save-record').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-const chatKey = 'luoty.chat.messages.v1';
-let messages = storage.read(chatKey, []);
-if (!Array.isArray(messages)) messages = [];
-messages = messages.filter(validMessage).slice(-150);
-let nickname = storage.read('luoty.chat.nickname.v1', '');
-$('#nickname').value = typeof nickname === 'string' ? nickname.slice(0, 16) : '';
-let clientId;
-try { clientId = sessionStorage.getItem('luoty.chat.client') || crypto.randomUUID();sessionStorage.setItem('luoty.chat.client', clientId); }
-catch { clientId = `cloud-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
-let channel;
-try { channel = new BroadcastChannel('luoty-chat');channel.onmessage = event => receiveMessage(event.data); } catch {}
-
-function validMessage(value) {
-  return value && typeof value.id === 'string' && typeof value.text === 'string' && value.text.length <= 500 && typeof value.name === 'string' && value.name.length <= 16 && typeof value.client === 'string' && Number.isFinite(value.time);
-}
-
-function renderMessages() {
-  const log = $('#messages');
-  const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
-  log.replaceChildren();
-  if (!messages.length) {
-    const empty = document.createElement('div');empty.className = 'empty-chat';
-    const flower = document.createElement('span');flower.textContent = '✿';
-    const text = document.createElement('div');text.textContent = '第一朵小心情，等你来种下。';
-    empty.append(flower, text);log.append(empty);return;
-  }
-  for (const message of messages) {
-    const row = document.createElement('div');row.className = `message${message.client === clientId ? ' own' : ''}`;
-    const meta = document.createElement('div');meta.className = 'message-meta';
-    meta.textContent = `${message.name} · ${new Date(message.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
-    const text = document.createElement('p');text.className = 'message-text';text.textContent = message.text;
-    row.append(meta, text);log.append(row);
-  }
-  if (nearBottom) log.scrollTop = log.scrollHeight;
-}
-
-function receiveMessage(message) {
-  if (!validMessage(message) || messages.some(m => m.id === message.id)) return;
-  messages = [...messages, message].sort((a, b) => a.time - b.time).slice(-150);
-  storage.write(chatKey, messages);renderMessages();
-}
-
-$('#chat-form').addEventListener('submit', event => {
-  event.preventDefault();
-  const input = $('#message-input');const text = input.value.trim();
-  if (!text) { input.focus();return; }
-  const name = $('#nickname').value.trim() || '路过的小云朵';
-  storage.write('luoty.chat.nickname.v1', name);
-  const message = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, client: clientId, name, text, time: Date.now() };
-  receiveMessage(message);channel?.postMessage(message);
-  input.value = '';$('#messages').scrollTop = $('#messages').scrollHeight;input.focus();
-  if (!storage.available) $('.chat-footnote').textContent = '浏览器的小口袋打不开，离开前记得把悄悄话带走哦。';
-});
-
 window.addEventListener('storage', event => {
   if (event.key === bestKey) {
     const value = storage.read(bestKey, 0);
     if (Number.isSafeInteger(value) && value > best) { best = value;refreshHUD(); }
-  }
-  if (event.key === chatKey && !channel) {
-    const value = storage.read(chatKey, []);
-    if (Array.isArray(value)) for (const message of value) receiveMessage(message);
   }
 });
 
@@ -292,7 +236,7 @@ function openDialog(dialog) {
     showOverlay(runner.state === 'over' ? 'over' : runner.state === 'paused' ? 'paused' : 'idle');
     renderRunner(ctx, runner);
   } else if (dialog === paintDialog) paintRoom.open();
-  else if (dialog === chatDialog) { renderMessages();$('#messages').scrollTop = $('#messages').scrollHeight; }
+  else if (dialog === chatDialog) chatRoom.open();
 }
 
 function closeDialog(updateHash = true) {
@@ -304,6 +248,7 @@ function closeDialog(updateHash = true) {
   }
   const dialog = openedDialog;openedDialog = null;dialog.close();
   if (dialog === paintDialog) paintRoom.close();
+  if (dialog === chatDialog) chatRoom.close();
   document.body.classList.remove('dialog-open');
   document.documentElement.classList.remove('dialog-open');
   if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}#explore`);
@@ -359,4 +304,4 @@ characterReady.then(() => {
   $('#start-game').disabled = false;
   drawCard();renderRunner(ctx, runner);
 }).catch(error => { $('#overlay-text').textContent = error.message; });
-refreshHUD();renderMessages();route();
+refreshHUD();route();

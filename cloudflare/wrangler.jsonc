@@ -1,0 +1,17 @@
+{
+  "name": "luoty-chat",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-10",
+  "account_id": "e0b70481fed2bc01fd2b3562c7cc5d8b",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://luoty.vip,https://www.luoty.vip,http://127.0.0.1:4173,http://127.0.0.1:4174,http://localhost:4173"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "luoty-chat",
+      "database_id": "c9a2d767-fe06-46f8-85ed-a7a54b3094e4"
+    }
+  ]
+}

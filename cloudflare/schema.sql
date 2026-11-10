@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 16),
+  text TEXT NOT NULL CHECK(length(text) BETWEEN 1 AND 500),
+  time INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS messages_time ON messages(time DESC, id DESC);

@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./hero.css">
+  <link rel="stylesheet" href="./chat.css">
   <link rel="preload" href="./assets/tianyi-run.webp" as="image" type="image/webp">
 </head>
 <body>
@@ -45,10 +46,13 @@
     </section>
   </main>
   <dialog id="chat-dialog" class="app-dialog chat-dialog" aria-labelledby="chat-title">
+    <div id="chat-content" inert>
     <div class="dialog-heading"><div><span class="eyebrow">LITTLE CONVERSATIONS</span><h2 id="chat-title">云边聊天室 <span>✿</span></h2></div><button class="icon-button close-dialog" aria-label="关闭聊天室">×</button></div>
-    <div class="chat-status"><span><i></i> 本机小窝</span><span>把心情轻轻放下来</span></div>
+    <div class="chat-status"><span><i></i> <span id="chat-location">本机小窝</span></span><span>把心情轻轻放下来</span></div>
     <div class="messages" id="messages" role="log" aria-label="聊天消息" aria-live="polite"></div>
-    <form id="chat-form"><label class="nickname-label" for="nickname">你的小名<input id="nickname" maxlength="16" placeholder="路过的小云朵" autocomplete="nickname"></label><div class="composer"><label class="sr-only" for="message-input">想说的话</label><input id="message-input" maxlength="500" placeholder="今天有什么小开心？" autocomplete="off" required><button class="send-button" type="submit" aria-label="发送消息">发送 <span aria-hidden="true">↗</span></button></div><div class="chat-footnote">悄悄话留在这台设备里，同一浏览器的小窗也能听见。</div></form>
+    <form id="chat-form"><label class="nickname-label" for="nickname">你的小名<input id="nickname" maxlength="16" placeholder="路过的小云朵" autocomplete="nickname"></label><div class="composer"><label class="sr-only" for="message-input">想说的话</label><input id="message-input" maxlength="500" placeholder="今天有什么小开心？" autocomplete="off" required><div class="chat-send-group"><button id="chat-send" class="send-button" type="submit"><svg id="chat-web-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" hidden><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg><span id="chat-send-label">记在小天地</span></button><button id="chat-send-toggle" class="send-button" type="button" aria-label="选择发送方式" aria-expanded="false" aria-controls="chat-send-menu" hidden><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button><div id="chat-send-menu" class="chat-send-menu" hidden><button type="button" data-chat-mode="cloud">分享小想法</button><button type="button" data-chat-mode="local">记在小天地</button></div></div></div></form>
+    </div>
+    <div id="chat-consent" class="chat-consent"><button id="chat-consent-cloud" class="send-button" type="button">我已满18，同意将小想法上传云端</button><button id="chat-consent-local" class="send-button" type="button">将小想法留在本地</button></div>
   </dialog>
   <dialog id="game-dialog" class="app-dialog game-dialog" aria-labelledby="game-title">
     <div class="dialog-heading"><div><span class="eyebrow">CATCH THE LITTLE JOYS</span><h2 id="game-title">小洛快跑 <span>✦</span></h2></div><div class="dialog-actions"><button class="icon-button" id="pause-game" aria-label="暂停游戏" disabled>Ⅱ</button><button class="icon-button close-dialog" aria-label="关闭游戏">×</button></div></div>
